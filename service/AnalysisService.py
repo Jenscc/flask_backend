@@ -11,7 +11,7 @@ from tensorflow import keras
 from service import utils
 from service.model import UNet
 
-localizationWeights = r'F:\demo\flask_backend\checkpoints\MBM\epoch_10.pth.tar'
+localizationWeights = r'F:\demo\flask_backend\checkpoints\LUSC\model_epoch=15.pth.tar'
 classifyModel = r'F:\demo\flask_backend\checkpoints\LUSC\my_model.h5'
 
 
