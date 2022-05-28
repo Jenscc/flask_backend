@@ -1,4 +1,7 @@
+import json
+
 from flask import Flask, request, jsonify
+from multiprocessing import Process
 
 from service.AnalysisService import analysis
 
@@ -15,10 +18,18 @@ def imgAnalysis():
     srcFileName = request.form.get('source_image')
     path = "F:/demo/res/img/"
     srcFilePath = path + srcFileName
-    fileName, yang, ying = analysis(srcFilePath)
+    d = {'path': srcFilePath}
+    p = Process(target=analysis, kwargs=d)
+    p.start()
+    p.join()
+    with open('./static/record.json', 'r') as recordF:
+        record = json.load(recordF)
+        fileName = record['fileName']
+        yang = record['yang']
+        ying = record['ying']
     tps = round(yang / (yang + ying) * 100, 1)
     return jsonify([fileName, yang, ying, tps])
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5000)

@@ -1,3 +1,4 @@
+import json
 import uuid
 
 import matplotlib.pyplot as plt
@@ -5,8 +6,8 @@ import numpy as np
 import tensorflow as tf
 import torch
 import torchvision.transforms as T
-from keras.applications.xception import preprocess_input
 from tensorflow import keras
+from keras.applications.xception import preprocess_input
 
 from service import utils
 from service.model import UNet
@@ -23,11 +24,10 @@ def detect(srcImgPath):
     image = utils.read_image(srcImgPath)
     transform = T.Compose([T.ToTensor(), T.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
     x = transform(image).unsqueeze(0)
-    points = None
     with torch.no_grad():
         x = x.to(utils.device())
         pred = utils.ensure_array(model(x)).squeeze(0)
-        points = utils.extract_points_from_direction_field_map(pred, lambda1=0.7, step=10)
+        points = utils.extract_points_from_direction_field_map(pred, lambda1=0.701, step=10)
 
     # save image and points
     image_array = np.array(image)
@@ -41,9 +41,9 @@ def detect(srcImgPath):
     uid = str(uuid.uuid4())
     fileName = ''.join(uid.split('-')) + ".png"
     savePath = 'F:/demo/res/img/' + fileName
-    plt.savefig(savePath, bbox_inches='tight')
+    plt.savefig(savePath, bbox_inches='tight', pad_inches=0)
     plt.close()
-
+    torch.cuda.empty_cache()
     return fileName, image, points
 
 
@@ -76,7 +76,8 @@ def classify(model, image):
     return result
 
 
-def analysis(srcImgPath):
+def analysis(**kwargs):
+    srcImgPath = kwargs.get('path')
     # 获取细胞位置
     fileName, image, points = detect(srcImgPath)
     # print(len(points))
@@ -95,4 +96,6 @@ def analysis(srcImgPath):
             yang += 1
         else:
             ying += 1
-    return fileName, yang, ying
+    with open('./static/record.json', 'w') as recordF:
+        dic = {'fileName': fileName, 'yang': yang, 'ying': ying}
+        json.dump(dic, recordF)
